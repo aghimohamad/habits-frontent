@@ -14,12 +14,35 @@ export default function RootLayout() {
 
   if (!loaded) {
     // Async font loading only occurs in development.
-    return null;
+    return null
   }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack screenOptions={{
+        headerShown: false,
+        contentStyle: {
+          backgroundColor: 'transparent',
+        },
+        animation: 'slide_from_right',
+        header: () => null,
+        navigationBarHidden: true,
+      }}>
+        <Stack.Screen
+          name="index"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+          <Stack.Screen
+          name="medications/add"
+          options={{
+            headerShown: false,
+            headerBackTitle: "",
+            title: "",
+          }}
+        />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
