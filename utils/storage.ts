@@ -1,144 +1,225 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const MEDICATIONS_KEY = "@medications";
-const DOSE_HISTORY_KEY = "@dose_history";
+const HABITS_KEY = "@habits";
+const HABIT_LOGS_KEY = "@habit_logs";
 
-export interface Medication {
-  id: string;
+export interface Habit {
+  _id?: string;
+  tempId: string;
   name: string;
-  dosage: string;
-  times: string[];
+  category: string;
+  frequency: string; // Daily, Weekdays, Weekends, Weekly
   startDate: string;
-  duration: string;
+  times: string[]; // Array of time strings in "HH:mm" format
   color: string;
   reminderEnabled: boolean;
-  currentSupply: number;
-  totalSupply: number;
-  refillAt: number;
-  refillReminder: boolean;
-  lastRefillDate?: string;
-}
-export interface DoseHistory {
-  id: string;
-  medicationId: string;
-  timestamp: string;
-  taken: boolean;
+  goal: number; // daily/weekly goal
+  streak: number; // current streak
+  bestStreak: number; // best streak achieved
+  lastCompleted?: string;
+  updatedAt: string;
+  deleted?: boolean;
 }
 
-export async function getMedications(): Promise<Medication[]> {
+export interface HabitLog {
+  _id?: string;
+  tempId: string;
+  habitId: string;
+  timestamp: string;
+  notes?: string; // optional notes for the habit completion
+}
+
+export async function getHabits(): Promise<Habit[]> {
   try {
-    const data = await AsyncStorage.getItem(MEDICATIONS_KEY);
+    const data = await AsyncStorage.getItem(HABITS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error("Error getting medications:", error);
+    console.error("Error getting habits:", error);
     return [];
   }
 }
 
-export async function addMedication(medication: Medication): Promise<void> {
+export async function addHabit(habit: Habit): Promise<void> {
   try {
-    const medications = await getMedications();
-    medications.push(medication);
-    await AsyncStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+    const habits = await getHabits();
+    habits.push(habit);
+    await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
   } catch (error) {
-    console.error("Error adding medication:", error);
+    console.error("Error adding habit:", error);
     throw error;
   }
 }
 
-export async function updateMedication(
-  updatedMedication: Medication
-): Promise<void> {
+export async function updateHabit(tempId: string, updatedHabit: Partial<Habit>): Promise<void> {
   try {
-    const medications = await getMedications();
-    const index = medications.findIndex(
-      (med) => med.id === updatedMedication.id
-    );
+    const habits = await getHabits();
+    const index = habits.findIndex((h) => h._id === tempId || h.tempId === tempId);
     if (index !== -1) {
-      medications[index] = updatedMedication;
-      await AsyncStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+      habits[index] = { ...habits[index], ...updatedHabit };
+      await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
     }
   } catch (error) {
-    console.error("Error updating medication:", error);
+    console.error("Error updating habit:", error);
     throw error;
   }
 }
 
-export async function deleteMedication(id: string): Promise<void> {
+export async function softDeleteHabit(id: string): Promise<void> {
   try {
-    const medications = await getMedications();
-    const updatedMedications = medications.filter((med) => med.id !== id);
-    await AsyncStorage.setItem(
-      MEDICATIONS_KEY,
-      JSON.stringify(updatedMedications)
+    const habits = await getHabits();
+    const habitToDelete = habits.find((h) => h._id === id || h.tempId === id);
+    if (habitToDelete) {
+      habitToDelete.deleted = true;
+      await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits));
+    }
+  } catch (error) {
+    console.error("Error deleting habit:", error);
+    throw error;
+  }
+}
+
+export async function hardDeleteHabit(id: string): Promise<void> { 
+  try {
+    const habits = await getHabits();
+    const habitToDelete = habits.find((h) => h._id === id || h.tempId === id);
+    if (habitToDelete) {
+      await AsyncStorage.setItem(HABITS_KEY, JSON.stringify(habits.filter((h) => h._id !== id && h.tempId !== id)));
+    }
+  } catch (error) {
+    console.error("Error deleting habit:", error);
+    throw error;
+  }
+}
+
+export async function getTodaysHabits(): Promise<HabitLog[]> {
+  try {
+    const logs = await getHabitLogs();
+    const today = new Date().toDateString();
+    return logs.filter(
+      (log) => new Date(log.timestamp).toDateString() === today
     );
   } catch (error) {
-    console.error("Error deleting medication:", error);
-    throw error;
+    console.error("Error getting today's habits:", error);
+    return [];
   }
 }
 
-export async function getDoseHistory(): Promise<DoseHistory[]> {
+export async function getHabitLogs(): Promise<HabitLog[]> {
   try {
-    const data = await AsyncStorage.getItem(DOSE_HISTORY_KEY);
+    const data = await AsyncStorage.getItem(HABIT_LOGS_KEY);
     return data ? JSON.parse(data) : [];
   } catch (error) {
-    console.error("Error getting dose history:", error);
-    return [];
-  }
-}
-
-export async function getTodaysDoses(): Promise<DoseHistory[]> {
-  try {
-    const history = await getDoseHistory();
-    const today = new Date().toDateString();
-    return history.filter(
-      (dose) => new Date(dose.timestamp).toDateString() === today
-    );
-  } catch (error) {
-    console.error("Error getting today's doses:", error);
+    console.error("Error getting habit logs:", error);
     return [];
   }
 }
 
 
-export async function recordDose(
-  medicationId: string,
-  taken: boolean,
-  timestamp: string
+
+export async function recordHabitCompletion(
+  habitId: string,
+  completed: boolean,
+  timestamp: string,
+  notes?: string
 ): Promise<void> {
   try {
-    const history = await getDoseHistory();
-    const newDose: DoseHistory = {
-      id: Math.random().toString(36).substr(2, 9),
-      medicationId,
+    const logs = await getHabitLogs();
+    const newLog: HabitLog = {
+      tempId: Math.random().toString(36).substr(2, 9),
+      habitId: habitId,
       timestamp,
-      taken,
+      notes,
     };
 
-    history.push(newDose);
-    await AsyncStorage.setItem(DOSE_HISTORY_KEY, JSON.stringify(history));
+    if (!completed) {
+      console.log('not completed')
+      // If not completed, remove any existing log for today
+      const today = new Date().toDateString();
+      const existingLogIndex = logs.findIndex(
+        (log) =>
+          log.habitId === habitId &&
+          new Date(log.timestamp).toDateString() === today
+      );
+      if (existingLogIndex !== -1) {
+        logs.splice(existingLogIndex, 1);
+      }
+      await AsyncStorage.setItem(HABIT_LOGS_KEY, JSON.stringify(logs));
+      return;
+    }
 
-    // Update medication supply if taken
-    if (taken) {
-      const medications = await getMedications();
-      const medication = medications.find((med) => med.id === medicationId);
-      if (medication && medication.currentSupply > 0) {
-        medication.currentSupply -= 1;
-        await updateMedication(medication);
+    logs.push(newLog);
+    await AsyncStorage.setItem(HABIT_LOGS_KEY, JSON.stringify(logs));
+
+    // Update habit streak if completed
+    if (completed) {
+      const habits = await getHabits();
+      const habit = habits.find((h) => h._id === habitId || h.tempId === habitId);
+      if (habit) {
+        console.log(habit)
+        const lastCompletedDate = habit.lastCompleted
+          ? new Date(habit.lastCompleted).toDateString()
+          : null;
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+        if (!lastCompletedDate || lastCompletedDate === yesterday) {
+          console.log("incrementing streak")
+          habit.streak += 1;
+          habit.bestStreak = Math.max(habit.streak, habit.bestStreak);
+        } else if (lastCompletedDate !== today) {
+          console.log("resetting streak")
+          habit.streak = 1;
+        }
+
+        habit.lastCompleted = timestamp;
+        const id = habit._id || habit.tempId; 
+        await updateHabit(id, habit);
       }
     }
   } catch (error) {
-    console.error("Error recording dose:", error);
+    console.error("Error recording habit completion:", error);
     throw error;
   }
 }
 
 export async function clearAllData(): Promise<void> {
   try {
-    await AsyncStorage.multiRemove([MEDICATIONS_KEY, DOSE_HISTORY_KEY]);
+    await AsyncStorage.multiRemove([HABITS_KEY, HABIT_LOGS_KEY]);
   } catch (error) {
     console.error("Error clearing data:", error);
     throw error;
+  }
+}
+
+export async function getWeeklyStats(habitId?: string): Promise<{
+  total: number;
+  completed: number;
+  streak: number;
+}> {
+  try {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const logs = await getHabitLogs();
+    const weekLogs = logs.filter(
+      (log) =>
+        new Date(log.timestamp) > weekAgo &&
+        (!habitId || log.habitId === habitId)
+    );
+
+    const total = weekLogs.length;
+    const completed = weekLogs.filter((log) => log.completed).length;
+
+    // Get current streak if habitId is provided
+    let streak = 0;
+    if (habitId) {
+      const habit = (await getHabits()).find((h) => h._id === habitId);
+      streak = habit?.streak || 0;
+    }
+
+    return { total, completed, streak };
+  } catch (error) {
+    console.error("Error getting weekly stats:", error);
+    return { total: 0, completed: 0, streak: 0 };
   }
 }

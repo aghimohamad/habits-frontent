@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { Medication } from './storage';
+import { Habit } from './storage';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -49,14 +49,14 @@ export async function registerForPushNotificationsAsync(): Promise<
   }
 }
 
-export async function scheduleMedicationReminder(
-  medication: Medication
+export async function scheduleHabitReminder(
+  habit: Habit
 ): Promise<string | undefined> {
-  if (!medication.reminderEnabled) return;
+  if (!habit.reminderEnabled) return;
 
   try {
     // Schedule notifications for each time
-    for (const time of medication.times) {
+    for (const time of habit.times) {
       const [hours, minutes] = time.split(":").map(Number);
       const today = new Date();
       today.setHours(hours, minutes, 0, 0);
@@ -70,9 +70,9 @@ export async function scheduleMedicationReminder(
 
       const identifier = await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Medication Reminder",
-          body: `Time to take ${medication.name} (${medication.dosage})`,
-          data: { medicationId: medication.id },
+          title: "Habit Reminder",
+          body: `Time to ${habit.name}`,
+          data: { habitId: habit.id },
         },
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -85,38 +85,13 @@ export async function scheduleMedicationReminder(
       return identifier;
     }
   } catch (error) {
-    console.error("Error scheduling medication reminder:", error);
+    console.error("Error scheduling habit reminder:", error);
     return undefined;
   }
 }
 
-export async function scheduleRefillReminder(
-  medication: Medication
-): Promise<string | undefined> {
-  if (!medication.refillReminder) return;
-
-  try {
-    // Schedule a notification when supply is low
-    if (medication.currentSupply <= medication.refillAt) {
-      const identifier = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Refill Reminder",
-          body: `Your ${medication.name} supply is running low. Current supply: ${medication.currentSupply}`,
-          data: { medicationId: medication.id, type: "refill" },
-        },
-        trigger: null, // Show immediately
-      });
-
-      return identifier;
-    }
-  } catch (error) {
-    console.error("Error scheduling refill reminder:", error);
-    return undefined;
-  }
-}
-
-export async function cancelMedicationReminders(
-  medicationId: string
+export async function cancelHabitReminders(
+  habitId: string
 ): Promise<void> {
   try {
     const scheduledNotifications =
@@ -124,30 +99,30 @@ export async function cancelMedicationReminders(
 
     for (const notification of scheduledNotifications) {
       const data = notification.content.data as {
-        medicationId?: string;
+        habitId?: string;
       } | null;
-      if (data?.medicationId === medicationId) {
+      if (data?.habitId === habitId) {
         await Notifications.cancelScheduledNotificationAsync(
           notification.identifier
         );
       }
     }
   } catch (error) {
-    console.error("Error canceling medication reminders:", error);
+    console.error("Error canceling habit reminders:", error);
   }
 }
 
-export async function updateMedicationReminders(
-  medication: Medication
+export async function updateHabitReminders(
+  habit: Habit
 ): Promise<void> {
   try {
     // Cancel existing reminders
-    await cancelMedicationReminders(medication.id);
+    await cancelHabitReminders(habit.id);
 
     // Schedule new reminders
-    await scheduleMedicationReminder(medication);
-    await scheduleRefillReminder(medication);
+    await scheduleHabitReminder(habit);
+    await scheduleRefillReminder(habit);
   } catch (error) {
-    console.error("Error updating medication reminders:", error);
+    console.error("Error updating habit reminders:", error);
   }
 }
