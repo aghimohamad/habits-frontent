@@ -36,13 +36,13 @@ const QUICK_ACTIONS = [
     color: "#2E7D32",
     gradient: ["#4CAF50", "#2E7D32"] as [string, string],
   },
-  // {
-  //   icon: "stats-chart-outline" as const,
-  //   label: "Progress\nStats",
-  //   route: "/stats" as const,
-  //   color: "#1976D2",
-  //   gradient: ["#2196F3", "#1976D2"] as [string, string],
-  // },
+  {
+    icon: "stats-chart-outline" as const,
+    label: "Progress\nStats",
+    route: "/calendar" as const,
+    color: "#1976D2",
+    gradient: ["#2196F3", "#1976D2"] as [string, string],
+  },
   {
     icon: "flame-outline" as const,
     label: "Streaks\nView",

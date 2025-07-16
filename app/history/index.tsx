@@ -29,7 +29,7 @@ export default function HistoryScreen() {
       // Group logs by date
       const grouped: GroupedLogs = {};
       logs.forEach((log) => {
-        const habit = habits.find((h) => h._id === log.habitId);
+        const habit = habits.find((h) => h._id === log.habitId || h.tempId === log.habitId);
         if (!habit) return;
 
         const date = new Date(log.timestamp).toDateString();
@@ -113,6 +113,7 @@ export default function HistoryScreen() {
         </View>
 
         {/* Daily Logs Section */}
+        <View style={styles.streaksContainer}>
         <ThemedText style={styles.sectionTitle}>Daily Logs</ThemedText>
         {Object.entries(groupedLogs).map(([date, { date: dateObj, logs }]) => (
           <View key={date} style={styles.dayGroup}>
@@ -159,6 +160,7 @@ export default function HistoryScreen() {
             ))}
           </View>
         ))}
+          </View>
       </ScrollView>
     </ThemedView>
   );
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
   },
   dayGroup: {
     marginBottom: 24,
-    paddingHorizontal: 16,
+    // paddingHorizontal: ,
   },
   dateHeader: {
     fontSize: 16,
