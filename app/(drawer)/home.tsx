@@ -14,6 +14,10 @@ import { ParamListBase } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useFocusEffect, useNavigation } from "expo-router";
 
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColor } from "@/hooks/useThemeColor";
 import React, { useCallback } from "react";
 import {
   Alert,
@@ -25,34 +29,35 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ThemeToggle } from "../_layout";
 
 const { width } = Dimensions.get("window");
 
 const QUICK_ACTIONS = [
   {
     icon: "add-circle-outline" as const,
-    label: "New\nHabit",
+    label: "New Habit",
     route: "/habits/add" as const,
     color: "#2E7D32",
     gradient: ["#4CAF50", "#2E7D32"] as [string, string],
   },
   {
     icon: "stats-chart-outline" as const,
-    label: "Progress\nStats",
+    label: "Progress Stats",
     route: "/calendar" as const,
     color: "#1976D2",
     gradient: ["#2196F3", "#1976D2"] as [string, string],
   },
   {
     icon: "flame-outline" as const,
-    label: "Streaks\nView",
+    label: "Streaks View",
     route: "/history" as const,
     color: "#C2185B",
     gradient: ["#E91E63", "#C2185B"] as [string, string],
   },
   {
     icon: "create-outline" as const,
-    label: "Manage\nHabits",
+    label: "Manage Habits",
     route: "/habits/manage" as const,
     color: "#E64A19",
     gradient: ["#FF5722", "#E64A19"] as [string, string],
@@ -91,11 +96,11 @@ export default function Home() {
         return isToday && startDate <= today;
       });
       setTodayHabits(todaysHabits);
-      console.log(todaysLogs)
+      console.log(todaysLogs);
       const completedIds = todaysLogs
         .filter((log) => log.timestamp)
-        .map((log) => log.habitId)
-      console.log(completedIds)
+        .map((log) => log.habitId);
+      console.log(completedIds);
       setCompletedHabits(completedIds);
 
       const completionRate =
@@ -111,7 +116,7 @@ export default function Home() {
   React.useEffect(() => {
     loadHabits();
   }, [loadHabits]);
-  console.log(habits)
+  console.log(habits);
   useFocusEffect(
     useCallback(() => {
       loadHabits();
@@ -122,7 +127,7 @@ export default function Home() {
   const handleToggleHabit = async (habitId: string) => {
     try {
       const isCompleted = completedHabits.includes(habitId);
-      console.log(isCompleted)
+      console.log(isCompleted);
       await recordHabitCompletion(
         habitId,
         !isCompleted,
@@ -135,187 +140,325 @@ export default function Home() {
     }
   };
 
+  const colorScheme = useColorScheme() ?? "light";
+  const backgroundColor = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const modalBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const modalTitleColor = useThemeColor(
+    { light: "#333", dark: "#ECEDEE" },
+    "text"
+  );
+  const sectionTitleColor = useThemeColor(
+    { light: "#1a1a1a", dark: "#ECEDEE" },
+    "text"
+  );
+  const emptyStateBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const emptyStateTextColor = useThemeColor(
+    { light: "#666", dark: "#aaa" },
+    "text"
+  );
+  const quickActionGradients = {
+    light: [
+      ["#4CAF50", "#2E7D32"],
+      ["#2196F3", "#1976D2"],
+      ["#E91E63", "#C2185B"],
+      ["#FF5722", "#E64A19"],
+    ],
+    dark: [
+      ["#388E3C", "#1B5E20"],
+      ["#1565C0", "#0D47A1"],
+      ["#AD1457", "#6A1B9A"],
+      ["#BF360C", "#3E2723"],
+    ],
+  };
+  const headerGradient =
+    colorScheme === "dark" ? ["#23272a", "#151718"] : ["#1a8e2d", "#146922"];
+
   return (
-    <ScrollView style={styles.container}>
-      <LinearGradient colors={["#1a8e2d", "#146922"]} style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerTop}>
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
-            >
-              <TouchableOpacity
-                style={styles.notificationButton}
-                onPress={() => navigation.openDrawer()}
+    <ScrollView style={[styles.container, { backgroundColor }]}>
+      <ThemedView style={styles.container}>
+        <LinearGradient
+          colors={headerGradient as [string, string]}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerTop}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
               >
-                <Ionicons name="menu" size={24} color="white" />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Daily Progress</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.notificationButton}
-              onPress={() => setShowNotifications(!showNotifications)}
-            >
-              <Ionicons name="notifications-outline" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-          <CircularProgress
-            progress={progress}
-            total={habits.length}
-            completed={completedHabits.length}
-            label="habits"
-          />
-        </View>
-      </LinearGradient>
-
-      {/* btn to clear all habits  */}
-      <TouchableOpacity onPress={() => clearAllData()}>
-        <Text>Clear All Habits</Text>
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            {QUICK_ACTIONS.map((action) => (
-              <Link href={action.route} asChild key={action.label}>
                 <TouchableOpacity
-                  key={action.label}
-                  style={{
-                    // flexBasis: "48%",
-                    width: (width - 50) * 0.5,
-                    height: 100,
-                    backgroundColor: action.color,
-                    borderRadius: 15,
-                  }}
+                  style={[styles.notificationButton]}
+                  onPress={() => navigation.openDrawer()}
                 >
-                  <LinearGradient
-                    colors={action.gradient}
+                  <Ionicons name="menu" size={24} color={textColor} />
+                </TouchableOpacity>
+                <ThemedText style={styles.headerTitle}>
+                  Daily Progress
+                </ThemedText>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <TouchableOpacity
+                style={[
+                  styles.notificationButton,
+                  {
+                    backgroundColor:
+                      colorScheme === "dark" ? "#23272a" : "#ffffff2d",
+                  },
+                ]}
+                onPress={() => setShowNotifications(!showNotifications)}
+              >
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color={textColor}
+                />
+              </TouchableOpacity>
+                <ThemeToggle />
+                </View>
+            </View>
+            <CircularProgress
+              progress={progress}
+              total={habits.length}
+              completed={completedHabits.length}
+              label="habits"
+              textColor={textColor}
+              subTextColor={colorScheme === "dark" ? "#aaa" : "#ffffffbe"}
+              circleBg={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.08)"
+                  : "rgba(255,255,255,0.2)"
+              }
+              progressColor={textColor}
+            />
+          </View>
+        </LinearGradient>
+        {/* btn to clear all habits  */}
+        {/* <TouchableOpacity onPress={() => clearAllData()}>
+          <ThemedText>Clear All Habits</ThemedText>
+        </TouchableOpacity> */}
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <ThemedText
+              style={[styles.sectionTitle, { color: sectionTitleColor }]}
+            >
+              Quick Actions
+            </ThemedText>
+            <View style={styles.quickActionsGrid}>
+              {QUICK_ACTIONS.map((action, idx) => (
+                <Link href={action.route} asChild key={action.label}>
+                  <TouchableOpacity
+                    key={action.label}
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      flex: 1,
+                      width: (width - 50) * 0.5,
+                      height: 100,
+                      backgroundColor:
+                        colorScheme === "dark" ? "#23272a" : action.color,
                       borderRadius: 15,
-                      alignItems: "flex-start",
-                      justifyContent: "center",
-                      padding: 15,
                     }}
                   >
-                    <View
+                    <LinearGradient
+                      colors={
+                        quickActionGradients[colorScheme][idx] as [
+                          string,
+                          string
+                        ]
+                      }
                       style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 8,
-                        backgroundColor: "rgba(255, 255, 255, 0.2)",
+                        width: "100%",
+                        height: "100%",
+                        flex: 1,
+                        borderRadius: 15,
+                        alignItems: "flex-start",
                         justifyContent: "center",
-                        alignItems: "center",
-                        marginBottom: 5,
+                        padding: 15,
                       }}
                     >
-                      <Ionicons name={action.icon} size={28} color="white" />
-                    </View>
-                    <Text
-                      style={{
-                        color: "white",
-                        textAlign: "left",
-                        fontSize: 12,
-                        fontWeight: "500",
-                      }}
-                    >
-                      {action.label}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </Link>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today&apos;s Habits</Text>
-            <Link href="/habits" style={styles.seeAllButton}>
-              See All
-            </Link>
-          </View>
-
-          {todayHabits.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="clipboard-outline" size={48} color="#ccc" />
-              <Text style={styles.emptyStateText}>No habits added yet</Text>
-              <Link href="/habits/add" asChild>
-                <TouchableOpacity style={styles.addHabitButton}>
-                  <Text style={styles.addHabitButtonText}>
-                    Add Your First Habit
-                  </Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
-          ) : (
-            <View style={styles.habitsList}>
-              {todayHabits.map((habit) => (
-                <HabitCard
-                  key={habit._id || habit.tempId}
-                  habit={habit}
-                  isCompleted={completedHabits.includes(habit._id || habit.tempId || "")}
-                  onToggle={handleToggleHabit}
-                />
+                      <View
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 8,
+                          backgroundColor:
+                            colorScheme === "dark"
+                              ? "rgba(255,255,255,0.08)"
+                              : "rgba(255, 255, 255, 0.2)",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginBottom: 5,
+                        }}
+                      >
+                        <Ionicons
+                          name={action.icon}
+                          size={28}
+                          color={"white"}
+                        />
+                      </View>
+                      <Text
+                        style={{
+                          color: "white",
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: "500",
+                        }}
+                      >
+                        {action.label}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Link>
               ))}
             </View>
-          )}
-        </View>
-      </View>
-
-      <Modal
-        visible={showNotifications}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowNotifications(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Reminders</Text>
-              <TouchableOpacity
-                onPress={() => setShowNotifications(false)}
-                style={styles.closeButton}
+          </View>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ThemedText
+                style={[styles.sectionTitle, { color: sectionTitleColor }]}
               >
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
+                Today&apos;s Habits
+              </ThemedText>
+              <Link href="/habits/manage" style={styles.seeAllButton}>
+                <ThemedText style={styles.seeAllButton}>See All</ThemedText>
+              </Link>
             </View>
-            {habits
-              .filter((habit) => habit.reminderEnabled)
-              .map((habit) => (
-                <View key={habit._id || habit.tempId} style={styles.notificationItem}>
-                  <View
+            {todayHabits.length === 0 ? (
+              <View
+                style={[styles.emptyState, { backgroundColor: emptyStateBg }]}
+              >
+                <Ionicons
+                  name="clipboard-outline"
+                  size={48}
+                  color={emptyStateTextColor}
+                />
+                <ThemedText
+                  style={[
+                    styles.emptyStateText,
+                    { color: emptyStateTextColor },
+                  ]}
+                >
+                  No habits added yet
+                </ThemedText>
+                <Link href="/habits/add" asChild>
+                  <TouchableOpacity
                     style={[
-                      styles.notificationIcon,
-                      { backgroundColor: habit.color + "20" },
+                      styles.addHabitButton,
+                      {
+                        backgroundColor:
+                          colorScheme === "dark" ? "#23272a" : "#1a8e2d",
+                      },
                     ]}
                   >
-                    <Ionicons
-                      name={
-                        completedHabits.includes(habit.id)
-                          ? "checkmark-circle"
-                          : "time"
-                      }
-                      size={24}
-                      color={habit.color}
-                    />
-                  </View>
-                  <View style={styles.notificationContent}>
-                    <Text style={styles.notificationTitle}>{habit.name}</Text>
-                    <Text style={styles.notificationCategory}>
-                      {habit.category}
-                    </Text>
-                    <Text style={styles.notificationTime}>
-                      {habit.frequency[0]}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                    <ThemedText style={styles.addHabitButtonText}>
+                      Add Your First Habit
+                    </ThemedText>
+                  </TouchableOpacity>
+                </Link>
+              </View>
+            ) : (
+              <View style={styles.habitsList}>
+                {todayHabits.map((habit) => (
+                  <HabitCard
+                    key={habit._id || habit.tempId}
+                    habit={habit}
+                    isCompleted={completedHabits.includes(
+                      habit._id || habit.tempId || ""
+                    )}
+                    onToggle={handleToggleHabit}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         </View>
-      </Modal>
+        <Modal
+          visible={showNotifications}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowNotifications(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: modalBg }]}>
+              <View style={styles.modalHeader}>
+                <ThemedText
+                  style={[styles.modalTitle, { color: modalTitleColor }]}
+                >
+                  Reminders
+                </ThemedText>
+                <TouchableOpacity
+                  onPress={() => setShowNotifications(false)}
+                  style={styles.closeButton}
+                >
+                  <Ionicons name="close" size={24} color={modalTitleColor} />
+                </TouchableOpacity>
+              </View>
+              {habits
+                .filter((habit) => habit.reminderEnabled)
+                .map((habit) => (
+                  <View
+                    key={habit._id || habit.tempId}
+                    style={[
+                      styles.notificationItem,
+                      {
+                        backgroundColor:
+                          colorScheme === "dark" ? "#23272a" : "#f5f5f5",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.notificationIcon,
+                        { backgroundColor: habit.color + "20" },
+                      ]}
+                    >
+                      <Ionicons
+                        name={
+                          completedHabits.includes(
+                            habit._id || habit.tempId || ""
+                          )
+                            ? "checkmark-circle"
+                            : "time"
+                        }
+                        size={24}
+                        color={habit.color}
+                      />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <ThemedText
+                        style={[
+                          styles.notificationTitle,
+                          { color: modalTitleColor },
+                        ]}
+                      >
+                        {habit.name}
+                      </ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.notificationCategory,
+                          { color: emptyStateTextColor },
+                        ]}
+                      >
+                        {habit.category}
+                      </ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.notificationTime,
+                          { color: emptyStateTextColor },
+                        ]}
+                      >
+                        {habit.frequency[0]}
+                      </ThemedText>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </View>
+        </Modal>
+      </ThemedView>
     </ScrollView>
   );
 }
@@ -323,7 +466,6 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
   },
   header: {
     paddingVertical: 30,

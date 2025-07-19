@@ -7,6 +7,10 @@ interface CircularProgressProps {
   total: number;
   completed: number;
   label: string;
+  textColor?: string;
+  subTextColor?: string;
+  circleBg?: string;
+  progressColor?: string;
 }
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -16,6 +20,10 @@ export function CircularProgress({
   total,
   completed,
   label,
+  textColor = "white",
+  subTextColor = "#ffffffbe",
+  circleBg = "rgba(255,255,255,0.2)",
+  progressColor = "white",
 }: CircularProgressProps) {
   const animatedValue = React.useRef(new Animated.Value(0)).current;
   const size = 200;
@@ -42,7 +50,7 @@ export function CircularProgress({
         <Text style={{ fontWeight: "bold", fontSize: 32, color: "white" }}>
           {Math.round(progress)}%
         </Text>
-        <Text style={{ fontSize: 12, color: "#ffffffbe" }}>
+        <Text style={{ fontSize: 12, color: subTextColor }}>
           {completed} of {total} {label}
         </Text>
       </View>
@@ -51,7 +59,7 @@ export function CircularProgress({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255, 255, 255, 0.2)"
+          stroke={circleBg}
           strokeWidth={strokeWidth}
           fill="none"
         />

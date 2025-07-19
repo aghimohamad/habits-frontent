@@ -1,13 +1,21 @@
-import { getHabits, Habit, softDeleteHabit, updateHabit } from "@/utils/storage";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColor } from "@/hooks/useThemeColor";
+import {
+  getHabits,
+  Habit,
+  softDeleteHabit,
+  updateHabit,
+} from "@/utils/storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Button,
   FlatList,
   Modal,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -29,9 +37,11 @@ const Manage = () => {
     setLoading(false);
   };
 
-  useFocusEffect(useCallback(() => {
-    loadHabits();
-  }, []));
+  useFocusEffect(
+    useCallback(() => {
+      loadHabits();
+    }, [])
+  );
 
   const openEditModal = (habit: Habit) => {
     setSelectedHabit(habit);
@@ -61,34 +71,80 @@ const Manage = () => {
     await loadHabits();
   };
 
-    const renderHabit = ({ item }: { item: Habit }) => {
-        return <View style={styles.habitCard}>
-            <View style={{ flex: 1 }}>
-                <Text style={styles.habitName}>{item.name}</Text>
-                <Text style={styles.habitCategory}>{item.category}</Text>
-            </View>
-            <TouchableOpacity
-                onPress={() => router.push({ pathname: `/habits/add`, params: { habitId: item._id || item.tempId } })}
-                style={styles.iconBtn}
-            >
-                <Ionicons name="create-outline" size={22} color="#1976D2" />
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={() => openDeleteModal(item)}
-                style={styles.iconBtn}
-            >
-                <Ionicons name="trash-outline" size={22} color="#D32F2F" />
-            </TouchableOpacity>
+  const colorScheme = useColorScheme() ?? "light";
+  const backgroundColor = useThemeColor({}, "background");
+  const cardBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const textColor = useThemeColor({}, "text");
+  const secondaryText = useThemeColor({ light: "#666", dark: "#aaa" }, "text");
+  const borderColor = useThemeColor(
+    { light: "#e0e0e0", dark: "#333" },
+    "background"
+  );
+  const modalBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const modalTitleColor = useThemeColor(
+    { light: "#333", dark: "#ECEDEE" },
+    "text"
+  );
+  const inputBg = useThemeColor(
+    { light: "#fafafa", dark: "#23272a" },
+    "background"
+  );
+  const inputBorder = useThemeColor(
+    { light: "#ccc", dark: "#444" },
+    "background"
+  );
+
+  const renderHabit = ({ item }: { item: Habit }) => {
+    return (
+      <View
+        style={[styles.habitCard, { backgroundColor: cardBg, borderColor }]}
+      >
+        <View style={{ flex: 1 }}>
+          <ThemedText style={[styles.habitName, { color: textColor }]}>
+            {item.name}
+          </ThemedText>
+          <ThemedText style={[styles.habitCategory, { color: secondaryText }]}>
+            {item.category}
+          </ThemedText>
         </View>
-    }
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: `/habits/add`,
+              params: { habitId: item._id || item.tempId },
+            })
+          }
+          style={styles.iconBtn}
+        >
+          <Ionicons name="create-outline" size={22} color="#1976D2" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => openDeleteModal(item)}
+          style={styles.iconBtn}
+        >
+          <Ionicons name="trash-outline" size={22} color="#D32F2F" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Manage Habits</Text>
+    <ThemedView style={[styles.container, { backgroundColor }]}>
+      <ThemedText style={[styles.title, { color: textColor }]}>
+        Manage Habits
+      </ThemedText>
       {loading ? (
-        <Text>Loading...</Text>
+        <ThemedText style={{ color: secondaryText }}>Loading...</ThemedText>
       ) : habits.length === 0 ? (
-        <Text style={styles.empty}>No habits found.</Text>
+        <ThemedText style={[styles.empty, { color: secondaryText }]}>
+          No habits found.
+        </ThemedText>
       ) : (
         <FlatList
           data={habits}
@@ -101,21 +157,39 @@ const Manage = () => {
       {/* Edit Modal */}
       <Modal visible={editModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Habit</Text>
+          <View style={[styles.modalContent, { backgroundColor: modalBg }]}>
+            <ThemedText style={[styles.modalTitle, { color: modalTitleColor }]}>
+              Edit Habit
+            </ThemedText>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: inputBg,
+                  borderColor: inputBorder,
+                  color: textColor,
+                },
+              ]}
               value={editFields.name}
               onChangeText={(name) => setEditFields((f) => ({ ...f, name }))}
               placeholder="Habit Name"
+              placeholderTextColor={secondaryText}
             />
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: inputBg,
+                  borderColor: inputBorder,
+                  color: textColor,
+                },
+              ]}
               value={editFields.category}
               onChangeText={(category) =>
                 setEditFields((f) => ({ ...f, category }))
               }
               placeholder="Category"
+              placeholderTextColor={secondaryText}
             />
             <View style={styles.modalBtnRow}>
               <Button
@@ -132,9 +206,13 @@ const Manage = () => {
       {/* Delete Modal */}
       <Modal visible={deleteModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Delete Habit</Text>
-            <Text>Are you sure you want to delete this habit?</Text>
+          <View style={[styles.modalContent, { backgroundColor: modalBg }]}>
+            <ThemedText style={[styles.modalTitle, { color: modalTitleColor }]}>
+              Delete Habit
+            </ThemedText>
+            <ThemedText style={{ color: textColor }}>
+              Are you sure you want to delete this habit?
+            </ThemedText>
             <View style={styles.modalBtnRow}>
               <Button
                 title="Cancel"
@@ -146,7 +224,7 @@ const Manage = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </ThemedView>
   );
 };
 
@@ -195,7 +273,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     padding: 6,
   },
-   modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.2)",
     justifyContent: "center",

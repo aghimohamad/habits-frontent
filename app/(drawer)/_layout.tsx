@@ -2,12 +2,26 @@
 import { Drawer } from 'expo-router/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { useTheme } from '@/store/themeContext';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 export default function DrawerLayout() {
+  const { theme } = useTheme();
+  const cardBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const textColor = useThemeColor({}, "text");
+
   return (
     <Drawer
       screenOptions={{
         headerShown: false,
+        drawerContentStyle: {
+          backgroundColor: cardBg,
+        },
+        drawerInactiveTintColor: textColor,
+        drawerActiveTintColor: textColor,
       }}
     >
       <Drawer.Screen

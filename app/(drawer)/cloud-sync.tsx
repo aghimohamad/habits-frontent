@@ -10,7 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
 
-const API_BASE = "http://localhost:5500/api/v1/";
+const API_BASE = "http://192.168.90.224:5500/api/v1/";
 const TOKEN_KEY = "@jwt_token";
 
 const CloudSync = () => {
@@ -56,6 +56,7 @@ const CloudSync = () => {
       const data = await res.json();
       console.log(data);
       if (!res.ok) {
+        console.log('error')
         setError(data.message || "Authentication failed");
         return;
       }

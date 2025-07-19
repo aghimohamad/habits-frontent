@@ -1,3 +1,7 @@
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColor } from "@/hooks/useThemeColor";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -8,7 +12,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -68,9 +71,9 @@ export default function CalendarScreen() {
     }
   }, [selectedDate]);
 
-  console.log(completedHabits)
-  console.log(dayHabits)
-  console.log(habitLogs)
+  console.log(completedHabits);
+  console.log(dayHabits);
+  console.log(habitLogs);
 
   useFocusEffect(
     useCallback(() => {
@@ -88,6 +91,22 @@ export default function CalendarScreen() {
   };
 
   const { days, firstDay, lastDay } = getDaysInMonth(selectedDate);
+
+  const colorScheme = useColorScheme() ?? "light";
+  const backgroundColor = useThemeColor({}, "background");
+  const cardBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const textColor = useThemeColor({}, "text");
+  const secondaryText = useThemeColor({ light: "#666", dark: "#aaa" }, "text");
+  const borderColor = useThemeColor(
+    { light: "#e0e0e0", dark: "#333" },
+    "background"
+  );
+  const accent = colorScheme === "dark" ? "#1a8e2d" : "#1a8e2d";
+  const headerGradient =
+    colorScheme === "dark" ? ["#23272a", "#151718"] : ["#1a8e2d", "#146922"];
 
   const renderCalendar = () => {
     const calendar: JSX.Element[] = [];
@@ -113,19 +132,26 @@ export default function CalendarScreen() {
           key={day}
           style={[
             styles.calendarDay,
-            isToday && styles.today,
+            isToday && { backgroundColor: accent + "15" },
             hasCompleted && styles.hasEvents,
             date.toDateString() === selectedDate.toDateString() && {
               borderWidth: 2,
-              borderColor: "#1a8e2d",
+              borderColor: accent,
             },
           ]}
           onPress={() => setSelectedDate(date)}
         >
-          <Text style={[styles.dayText, isToday && styles.todayText]}>
+          <ThemedText
+            style={[
+              styles.dayText,
+              isToday && { color: accent, fontWeight: "600" },
+            ]}
+          >
             {day}
-          </Text>
-          {hasCompleted && <View style={styles.eventDot} />}
+          </ThemedText>
+          {hasCompleted && (
+            <View style={[styles.eventDot, { backgroundColor: accent }]} />
+          )}
         </TouchableOpacity>
       );
 
@@ -167,10 +193,10 @@ export default function CalendarScreen() {
     if (dayHabits.length === 0) {
       return (
         <View style={styles.emptyState}>
-          <Ionicons name="clipboard-outline" size={48} color="#ccc" />
-          <Text style={styles.emptyStateText}>
+          <Ionicons name="clipboard-outline" size={48} color={secondaryText} />
+          <ThemedText style={[styles.emptyStateText, { color: secondaryText }]}>
             No habits scheduled for this day
-          </Text>
+          </ThemedText>
         </View>
       );
     }
@@ -179,18 +205,29 @@ export default function CalendarScreen() {
         habit._id || habit.tempId || ""
       );
       return (
-        <View key={habit._id || habit.tempId} style={styles.habitCard}>
+        <View
+          key={habit._id || habit.tempId}
+          style={[styles.habitCard, { backgroundColor: cardBg, borderColor }]}
+        >
           <View style={[styles.habitColor, { backgroundColor: habit.color }]} />
           <View style={styles.habitInfo}>
-            <Text style={styles.habitName}>{habit.name}</Text>
-            <Text style={styles.habitCategory}>{habit.category}</Text>
-            <Text style={styles.habitTime}>{habit.times[0]}</Text>
+            <ThemedText style={[styles.habitName, { color: textColor }]}>
+              {habit.name}
+            </ThemedText>
+            <ThemedText
+              style={[styles.habitCategory, { color: secondaryText }]}
+            >
+              {habit.category}
+            </ThemedText>
+            <ThemedText style={[styles.habitTime, { color: secondaryText }]}>
+              {habit.times[0]}
+            </ThemedText>
           </View>
           <TouchableOpacity
             style={[
               styles.toggleButton,
               isCompleted
-                ? styles.completedButton
+                ? [styles.completedButton, { backgroundColor: accent }]
                 : { backgroundColor: habit.color },
             ]}
             onPress={() => handleToggleHabit(habit._id || habit.tempId)}
@@ -198,7 +235,7 @@ export default function CalendarScreen() {
             {isCompleted ? (
               <Ionicons name="checkmark-circle" size={24} color="#fff" />
             ) : (
-              <Text style={styles.toggleButtonText}>Mark Done</Text>
+              <ThemedText style={styles.toggleButtonText}>Mark Done</ThemedText>
             )}
           </TouchableOpacity>
         </View>
@@ -207,9 +244,9 @@ export default function CalendarScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor }]}>
       <LinearGradient
-        colors={["#1a8e2d", "#146922"]}
+        colors={headerGradient as [string, string]}
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
@@ -219,14 +256,25 @@ export default function CalendarScreen() {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: cardBg }]}
           >
-            <Ionicons name="chevron-back" size={28} color="#1a8e2d" />
+            <Ionicons name="chevron-back" size={28} color={accent} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Calendar</Text>
+          <ThemedText style={[styles.headerTitle, { color: textColor }]}>
+            Calendar
+          </ThemedText>
         </View>
 
-        <View style={styles.calendarContainer}>
+        <View
+          style={[
+            styles.calendarContainer,
+            {
+              backgroundColor: cardBg,
+              borderColor,
+              shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            },
+          ]}
+        >
           <View style={styles.monthHeader}>
             <TouchableOpacity
               onPress={() =>
@@ -239,14 +287,14 @@ export default function CalendarScreen() {
                 )
               }
             >
-              <Ionicons name="chevron-back" size={24} color="#333" />
+              <Ionicons name="chevron-back" size={24} color={textColor} />
             </TouchableOpacity>
-            <Text style={styles.monthText}>
+            <ThemedText style={[styles.monthText, { color: textColor }]}>
               {selectedDate.toLocaleString("default", {
                 month: "long",
                 year: "numeric",
               })}
-            </Text>
+            </ThemedText>
             <TouchableOpacity
               onPress={() =>
                 setSelectedDate(
@@ -258,35 +306,46 @@ export default function CalendarScreen() {
                 )
               }
             >
-              <Ionicons name="chevron-forward" size={24} color="#333" />
+              <Ionicons name="chevron-forward" size={24} color={textColor} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.weekdayHeader}>
             {WEEKDAYS.map((day) => (
-              <Text key={day} style={styles.weekdayText}>
+              <ThemedText
+                key={day}
+                style={[styles.weekdayText, { color: secondaryText }]}
+              >
                 {day}
-              </Text>
+              </ThemedText>
             ))}
           </View>
 
           {renderCalendar()}
         </View>
 
-        <View style={styles.scheduleContainer}>
-          <Text style={styles.scheduleTitle}>
+        <View
+          style={[
+            styles.scheduleContainer,
+            {
+              backgroundColor: cardBg,
+              shadowColor: colorScheme === "dark" ? "#000" : "#000",
+            },
+          ]}
+        >
+          <ThemedText style={[styles.scheduleTitle, { color: textColor }]}>
             {selectedDate.toLocaleDateString("default", {
               weekday: "long",
               month: "long",
               day: "numeric",
             })}
-          </Text>
+          </ThemedText>
           <ScrollView showsVerticalScrollIndicator={false}>
             {renderHabitsForDate()}
           </ScrollView>
         </View>
       </View>
-    </View>
+    </ThemedView>
   );
 }
 
@@ -381,7 +440,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 16,
-    color: "#333",
+    color: "#888",
   },
   today: {
     backgroundColor: "#1a8e2d15",
