@@ -3,6 +3,7 @@ import { HabitCard } from "@/components/HabitCard";
 import { registerForPushNotificationsAsync } from "@/utils/notifications";
 import {
   Habit,
+  HabitLog,
   clearAllData,
   getHabits,
   getTodaysHabits,
@@ -69,7 +70,7 @@ export default function Home() {
   const navigation = useNavigation<DrawerNavigationProp<ParamListBase>>();
   const [showNotifications, setShowNotifications] = React.useState(false);
   const [habits, setHabits] = React.useState<Habit[]>([]);
-  const [completedHabits, setCompletedHabits] = React.useState<string[]>([]);
+  const [completedHabits, setCompletedHabits] = React.useState<HabitLog[]>([]);
   const [progress, setProgress] = React.useState(0);
   const [todayHabits, setTodayHabits] = React.useState<Habit[]>([]);
   const loadHabits = useCallback(async () => {
@@ -79,7 +80,9 @@ export default function Home() {
         getHabits(),
         getTodaysHabits(),
       ]);
-
+      console.log(
+        todaysLogs
+      )
       setHabits(allHabits.filter((habit) => !habit.deleted));
       const todaysHabits = allHabits.filter((habit) => {
         const startDate = new Date(habit.startDate);
@@ -96,11 +99,8 @@ export default function Home() {
         return isToday && startDate <= today;
       });
       setTodayHabits(todaysHabits);
-      console.log(todaysLogs);
       const completedIds = todaysLogs
-        .filter((log) => log.timestamp)
-        .map((log) => log.habitId);
-      console.log(completedIds);
+        .filter((log) => log.timestamp )
       setCompletedHabits(completedIds);
 
       const completionRate =
@@ -123,15 +123,14 @@ export default function Home() {
       return () => {};
     }, [loadHabits])
   );
-
   const handleToggleHabit = async (habitId: string) => {
     try {
-      const isCompleted = completedHabits.includes(habitId);
-      console.log(isCompleted);
+      const habit = todayHabits.find(h => habitId === h._id || h.tempId)!
+        console.log('click', habitId)
       await recordHabitCompletion(
         habitId,
-        !isCompleted,
-        new Date().toISOString()
+        new Date().toISOString(),
+        habit.goal,
       );
       await loadHabits();
     } catch (error) {
@@ -239,9 +238,9 @@ export default function Home() {
           </View>
         </LinearGradient>
         {/* btn to clear all habits  */}
-        {/* <TouchableOpacity onPress={() => clearAllData()}>
+        <TouchableOpacity onPress={() => clearAllData()}>
           <ThemedText>Clear All Habits</ThemedText>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <View style={styles.content}>
           <View style={styles.section}>
             <ThemedText
@@ -365,9 +364,7 @@ export default function Home() {
                   <HabitCard
                     key={habit._id || habit.tempId}
                     habit={habit}
-                    isCompleted={completedHabits.includes(
-                      habit._id || habit.tempId || ""
-                    )}
+                    log={completedHabits.find(h => h.habitId === habit._id  || h.habitId === habit.tempId)!}
                     onToggle={handleToggleHabit}
                   />
                 ))}
@@ -417,9 +414,7 @@ export default function Home() {
                     >
                       <Ionicons
                         name={
-                          completedHabits.includes(
-                            habit._id || habit.tempId || ""
-                          )
+                          completedHabits.some(h => (h.habitId === habit._id  || h.habitId === habit.tempId ) && h.goal === h.completedCount)
                             ? "checkmark-circle"
                             : "time"
                         }

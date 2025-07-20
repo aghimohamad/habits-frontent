@@ -1,4 +1,4 @@
-import { Habit } from "@/utils/storage";
+import { Habit, HabitLog } from "@/utils/storage";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
@@ -6,12 +6,13 @@ import { ThemedText } from "./ThemedText";
 
 interface HabitCardProps {
   habit: Habit;
-  isCompleted: boolean;
+  log: HabitLog;
   onToggle: (habitId: string) => void;
 }
 
-export const HabitCard = ({ habit, isCompleted, onToggle }: HabitCardProps) => {
-  console.log(habit)
+export const HabitCard = ({ habit, log, onToggle }: HabitCardProps) => {
+  const isCompleted = log?.goal && log?.completedCount === log?.goal;
+  console.log("isCompleted", isCompleted, log);
   return (
     <TouchableOpacity
       style={[styles.card, { backgroundColor: habit.color + "20" }]}
@@ -45,9 +46,35 @@ export const HabitCard = ({ habit, isCompleted, onToggle }: HabitCardProps) => {
             <ThemedText style={styles.completedText}>Done</ThemedText>
           </View>
         ) : (
-          <View style={[styles.badge, { backgroundColor: habit.color + "33" }]}>
-            <ThemedText style={[styles.pendingText, { color: habit.color }]}>
-              Tick
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor: habit.color + "33",
+                position: "relative",
+                overflow: "hidden",
+              },
+            ]}
+          >
+            {/* Progress background */}
+            {log && log.goal > 1 && (
+              <View
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: `${(log.completedCount / log.goal) * 100}%`,
+                  backgroundColor: habit.color + "99",
+                  borderRadius: 12,
+                  zIndex: 0,
+                }}
+              />
+            )}
+            <ThemedText
+              style={[styles.pendingText, { color: habit.color, zIndex: 1 }]}
+            >
+              {log ? `${log.completedCount}/${log.goal}` : "Tick"}
             </ThemedText>
           </View>
         )}

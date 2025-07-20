@@ -24,6 +24,7 @@ import {
 } from "../../utils/storage";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const BUTTON_WIDTH = 80;
 
 export default function CalendarScreen() {
   const router = useRouter();
@@ -176,11 +177,12 @@ export default function CalendarScreen() {
 
   const handleToggleHabit = async (habitId: string) => {
     try {
-      const isCompleted = completedHabits.includes(habitId);
+      const habit = habits.find((h) => habitId === h._id || h.tempId)!;
+      console.log("click", habitId);
       await recordHabitCompletion(
         habitId,
-        !isCompleted,
-        new Date(selectedDate).toISOString()
+        new Date().toISOString(),
+        habit.goal
       );
       await loadData();
     } catch (error) {
@@ -201,9 +203,15 @@ export default function CalendarScreen() {
       );
     }
     return dayHabits.map((habit) => {
-      const isCompleted = completedHabits.includes(
-        habit._id || habit.tempId || ""
+      // Find the log for this habit on the selected date
+      const log = habitLogs.find(
+        (l) =>
+          l.habitId === habit._id ||
+          (l.habitId === habit.tempId &&
+            new Date(l.timestamp).toDateString() ===
+              selectedDate.toDateString())
       );
+      const isCompleted = log?.goal && log?.completedCount === log?.goal;
       return (
         <View
           key={habit._id || habit.tempId}
@@ -226,16 +234,49 @@ export default function CalendarScreen() {
           <TouchableOpacity
             style={[
               styles.toggleButton,
-              isCompleted
+              {
+                width: BUTTON_WIDTH,
+                backgroundColor: habit.color + "33",
+                position: "relative",
+                overflow: "hidden",
+              },
+              ...(isCompleted
                 ? [styles.completedButton, { backgroundColor: accent }]
-                : { backgroundColor: habit.color },
+                : []),
             ]}
             onPress={() => handleToggleHabit(habit._id || habit.tempId)}
           >
+            {/* Progress background */}
+            {log && log.goal > 1 && (
+              <View
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: (log.completedCount / log.goal) * BUTTON_WIDTH,
+                  backgroundColor: habit.color + "99",
+                  borderRadius: 12,
+                  zIndex: 0,
+                }}
+              />
+            )}
             {isCompleted ? (
-              <Ionicons name="checkmark-circle" size={24} color="#fff" />
+              <Ionicons
+                name="checkmark-circle"
+                size={24}
+                color="#fff"
+                style={{ zIndex: 1 }}
+              />
             ) : (
-              <ThemedText style={styles.toggleButtonText}>Mark Done</ThemedText>
+              <ThemedText
+                style={[
+                  styles.toggleButtonText,
+                  { color: habit.color, zIndex: 1 },
+                ]}
+              >
+                {log ? `${log.completedCount}/${log.goal}` : "Tick"}
+              </ThemedText>
             )}
           </TouchableOpacity>
         </View>
@@ -520,9 +561,12 @@ const styles = StyleSheet.create({
   toggleButton: {
     paddingVertical: 8,
     paddingHorizontal: 15,
+    width: BUTTON_WIDTH,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    position: "relative",
+    overflow: "hidden",
   },
   completedButton: {
     backgroundColor: "#1a8e2d",
