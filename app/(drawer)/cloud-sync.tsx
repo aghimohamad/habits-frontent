@@ -1,3 +1,7 @@
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { useThemeColor } from "@/hooks/useThemeColor";
 import {
   addHabit,
   getHabitLogs,
@@ -8,7 +12,7 @@ import {
 } from "@/utils/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Button, StyleSheet, TextInput, View } from "react-native";
 
 const API_BASE = "http://192.168.90.224:5500/api/v1/";
 const TOKEN_KEY = "@jwt_token";
@@ -56,7 +60,7 @@ const CloudSync = () => {
       const data = await res.json();
       console.log(data);
       if (!res.ok) {
-        console.log('error')
+        console.log("error");
         setError(data.message || "Authentication failed");
         return;
       }
@@ -128,11 +132,11 @@ const CloudSync = () => {
     }
 
     const logsToSync = logs
-    .filter(log => !log._id)
-    .map(log => ({
-      ...log,
-      habitId: data.payload.tempIds[log.habitId] || log.habitId, // update to real _id if needed
-    }));
+      .filter((log) => !log._id)
+      .map((log) => ({
+        ...log,
+        habitId: data.payload.tempIds[log.habitId] || log.habitId, // update to real _id if needed
+      }));
 
     const logRes = await fetch(`${API_BASE}logs/sync`, {
       method: "POST",
@@ -145,7 +149,6 @@ const CloudSync = () => {
     const logData = await logRes.json();
     console.log(logData);
 
-    
     // Merge logs like habits
     if (logData.payload && logData.payload.allLogs) {
       const serverLogs = logData.payload.allLogs;
@@ -177,45 +180,93 @@ const CloudSync = () => {
     setSyncing(false);
   };
 
+  const colorScheme = useColorScheme() ?? "light";
+  const backgroundColor = useThemeColor({}, "background");
+  const cardBg = useThemeColor(
+    { light: "#fff", dark: "#23272a" },
+    "background"
+  );
+  const textColor = useThemeColor({}, "text");
+  const secondaryText = useThemeColor({ light: "#666", dark: "#aaa" }, "text");
+  const borderColor = useThemeColor(
+    { light: "#e0e0e0", dark: "#333" },
+    "background"
+  );
+  const inputBg = useThemeColor(
+    { light: "#fafafa", dark: "#23272a" },
+    "background"
+  );
+  const inputBorder = useThemeColor(
+    { light: "#ccc", dark: "#444" },
+    "background"
+  );
+
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
-      </View>
+      <ThemedView style={[styles.container, { backgroundColor }]}>
+        <ThemedText style={{ color: textColor }}>Loading...</ThemedText>
+      </ThemedView>
     );
   }
-
   return (
-    <View style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor }]}>
       {!token ? (
-        <View style={styles.card}>
-          <Text style={styles.title}>
+        <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+          <ThemedText style={[styles.title, { color: textColor }]}>
             {mode === "sign-in" ? "Sign In" : "Sign Up"} to Cloud Sync
-          </Text>
+          </ThemedText>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: inputBg,
+                borderColor: inputBorder,
+                color: textColor,
+              },
+            ]}
             placeholder="Name"
             value={name}
             onChangeText={setName}
             autoCapitalize="none"
             keyboardType="default"
+            placeholderTextColor={secondaryText}
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: inputBg,
+                borderColor: inputBorder,
+                color: textColor,
+              },
+            ]}
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            placeholderTextColor={secondaryText}
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: inputBg,
+                borderColor: inputBorder,
+                color: textColor,
+              },
+            ]}
             placeholder="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            placeholderTextColor={secondaryText}
           />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <ThemedText style={[styles.error, { color: "red" }]}>
+              {error}
+            </ThemedText>
+          ) : null}
           <Button
             title={mode === "sign-in" ? "Sign In" : "Sign Up"}
             onPress={handleAuth}
@@ -231,10 +282,16 @@ const CloudSync = () => {
           />
         </View>
       ) : (
-        <View style={styles.card}>
-          <Text style={styles.title}>Cloud Sync</Text>
-          <Text style={styles.label}>Signed in as:</Text>
-          <Text style={styles.userInfo}>{user?.email}</Text>
+        <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+          <ThemedText style={[styles.title, { color: textColor }]}>
+            Cloud Sync
+          </ThemedText>
+          <ThemedText style={[styles.label, { color: secondaryText }]}>
+            Signed in as:
+          </ThemedText>
+          <ThemedText style={[styles.userInfo, { color: textColor }]}>
+            {user?.email}
+          </ThemedText>
           <Button
             title={syncing ? "Syncing..." : "Sync to Cloud"}
             onPress={handleSync}
@@ -244,7 +301,7 @@ const CloudSync = () => {
           <Button title="Sign Out" onPress={handleSignOut} color="#d32f2f" />
         </View>
       )}
-    </View>
+    </ThemedView>
   );
 };
 
