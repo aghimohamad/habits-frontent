@@ -14,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import { Alert, Button, StyleSheet, TextInput, View } from "react-native";
 
-const API_BASE = "http://192.168.90.224:5500/api/v1/";
+const API_BASE = "https://habits-server-busi.onrender.com/api/v1/";
 const TOKEN_KEY = "@jwt_token";
 
 const CloudSync = () => {
@@ -180,7 +180,6 @@ const CloudSync = () => {
     setSyncing(false);
   };
 
-  const colorScheme = useColorScheme() ?? "light";
   const backgroundColor = useThemeColor({}, "background");
   const cardBg = useThemeColor(
     { light: "#fff", dark: "#23272a" },
